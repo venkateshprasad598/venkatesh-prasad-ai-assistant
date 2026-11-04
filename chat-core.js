@@ -66,6 +66,13 @@ export function createRateLimiter({ windowMs, max }) {
   };
 }
 
+/** Short, safe-to-show reason for a failed model call, e.g. "error 404 model_not_found". */
+export function describeFailure(err) {
+  if (err?.status) return `error ${err.status}${err.code ? ` ${err.code}` : ""}`;
+  if (err?.name === "TimeoutError") return "timed out";
+  return "network error";
+}
+
 /** Calls any OpenAI-compatible /chat/completions endpoint and returns the reply text. */
 export async function generateReply({ baseUrl, model, apiKey, systemPrompt, messages, timeoutMs }) {
   const upstream = await fetch(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
@@ -84,7 +91,18 @@ export async function generateReply({ baseUrl, model, apiKey, systemPrompt, mess
   });
 
   if (!upstream.ok) {
-    throw new Error(`LLM returned ${upstream.status}: ${(await upstream.text()).slice(0, 300)}`);
+    const text = await upstream.text();
+    let code;
+    try {
+      code = JSON.parse(text)?.error?.code;
+    } catch {
+      /* body was not JSON */
+    }
+    throw Object.assign(new Error(`LLM returned ${upstream.status}: ${text.slice(0, 300)}`), {
+      status: upstream.status,
+      // Only a short identifier such as "model_not_found" is kept, never the full message.
+      code: typeof code === "string" && /^[\w.-]{1,40}$/.test(code) ? code : undefined,
+    });
   }
   const data = await upstream.json();
   const reply = data.choices?.[0]?.message?.content?.trim();

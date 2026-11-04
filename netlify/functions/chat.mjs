@@ -5,6 +5,7 @@ import {
   MAX_BODY_BYTES,
   buildSystemPrompt,
   createRateLimiter,
+  describeFailure,
   generateReply,
   isAudience,
   sanitizeMessages,
@@ -62,6 +63,6 @@ export default async (req, context) => {
     return json(200, { reply });
   } catch (err) {
     console.error("Chat failure:", err.message);
-    return json(502, { error: "The assistant is unavailable right now." });
+    return json(502, { error: `The assistant is unavailable right now (${describeFailure(err)}).` });
   }
 };

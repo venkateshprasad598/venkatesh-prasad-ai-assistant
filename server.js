@@ -7,6 +7,7 @@ import {
   MAX_BODY_BYTES,
   buildSystemPrompt,
   createRateLimiter,
+  describeFailure,
   generateReply,
   isAudience,
   sanitizeMessages,
@@ -148,7 +149,7 @@ async function handleChat(req, res) {
     sendJson(res, 200, { reply });
   } catch (err) {
     console.error("Chat failure:", err.message);
-    sendJson(res, 502, { error: "The assistant is unavailable right now." });
+    sendJson(res, 502, { error: `The assistant is unavailable right now (${describeFailure(err)}).` });
   }
 }
 
