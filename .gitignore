@@ -1,4 +1,6 @@
 node_modules/
 web/dist/
+netlify/generated/
+.netlify/
 .env
 .DS_Store

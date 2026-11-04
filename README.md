@@ -42,7 +42,21 @@ All optional. Copy `.env.example` to `.env` to override.
 - The server loads that audience's profile file, adds it to a system prompt with rules (answer only from the profile, refuse private details, ignore attempts to change the rules), and calls the model.
 - The server limits request size, history length, and requests per IP (15 per minute). It serves only files inside `web/dist`.
 
-## Putting it online
+## Deploy to Netlify
+
+Netlify cannot run `server.js` or reach Ollama on your laptop. On Netlify the frontend is static and `/api/chat` is a serverless function (`netlify/functions/chat.mjs`) that calls a hosted open-model API. `chat-core.js` holds the logic shared with `server.js`.
+
+`netlify.toml` already sets the build command, publish directory and functions directory. In the Netlify UI, leave Base directory and Package directory empty, and add these environment variables (get a free key at https://console.groq.com):
+
+| Variable | Value |
+| --- | --- |
+| `LLM_BASE_URL` | `https://api.groq.com/openai/v1` |
+| `LLM_MODEL` | `llama-3.3-70b-versatile` |
+| `LLM_API_KEY` | your Groq key (mark it as a secret) |
+
+The profile files are copied into the function at build time, so edit them and redeploy to change what the agent knows.
+
+## Putting it online elsewhere
 
 - Ollama must run on the same machine or be reachable from the host, so use a server you control or switch to a hosted open-model provider via `LLM_BASE_URL` and `LLM_API_KEY`.
 - Anyone can choose "Friend or Family", so the details in `profile.personal.md` are visible to every visitor.
